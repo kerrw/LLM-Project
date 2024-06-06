@@ -45,22 +45,43 @@ with st.sidebar:
         st.markdown("[Get a Cohere API Key](https://dashboard.cohere.ai/api-keys)")
     
     my_documents = []
-    selected_doc = st.selectbox("Select your departure location", ["Tai Tam Middle School", "Repulse Bay"])
-    if selected_doc == "Tai Tam Bus Schedule":
-        my_documents = pdf_to_documents('docs/HKISTaiTamBusSchedule.pdf')
-    elif selected_doc == "Repulse Bay Bus Schedule":    
-        my_documents = pdf_to_documents('docs/HKISRepulseBayBusSchedule.pdf')
+    tone = []
+    selected_tone = st.selectbox("Select your tone", ["Default", "Formal", "Semi-formal", "Casual"])
+    if selected_tone == "Fomal":
+        tone = "Formal"
+    elif selected_tone == "Semiformal":    
+        tone = "Semi-formal"
+    elif selected_tone == "Casual":    
+        tone = "Casual"
     else:
-        my_documents = pdf_to_documents('docs/HKISTaiTamBusSchedule.pdf')
+        tone = "Default"
 
-    # st.write(f"Selected document: {selected_doc}")
+    st.write(f"Selected tone: {selected_tone}")
+
+    voice = []
+    selected_voice = st.selectbox("Select your voice", ["Default", "Humorous", "Informative", "Authoritative", "Conversational", "Pleading"])
+    if selected_voice == "Humorous":
+        voice = "Humorous"
+    elif selected_voice == "Informative":    
+        voice = "Informative"
+    elif selected_voice == "Authoritative":    
+        voice = "Authoritative"
+    elif selected_voice == "Conversational":    
+        voice = "Conversational"
+    elif selected_voice == "Pleading":    
+        voice = "Pleading"
+    else:
+        tone = "Default"
+
+    st.write(f"Selected voice: {selected_voice}")
+    
 
 # Set the title of the Streamlit app
-st.title("💬 HKIS Bus Helper")
+st.title("💬 Email Drafter")
 
 # Initialize the chat history with a greeting message
 if "messages" not in st.session_state:
-    st.session_state["messages"] = [{"role": "assistant", "text": "Hi! I'm the HKIS Bus Helper. Select your location from the dropdown then ask me where you'd like to go and I'll do my best to find a school bus that will get you there."}]
+    st.session_state["messages"] = [{"role": "assistant", "text": "Hi! I am a email drafter bot that can help you write any kind of email you want given a description of the prompt."}]
 
 # Display the chat messages
 for msg in st.session_state.messages:
@@ -79,19 +100,38 @@ if prompt := st.chat_input():
     # Display the user message in the chat window
     st.chat_message("user").write(prompt)
 
-    preamble = """You are the Hong Kong International School Bus Helper bot. You help people understand the bus schedule.
-    When someone mentions a location you should refer to the document to see if there are buses that stop nearby.
-    Respond with advice about which buses will stop the closest to their destination, the name of the stop they 
-    should get off at and the name of the suburb that the stop is located in. 
-    Finish with brief instructions for how they can get from the stop to their destination.
-    Group the buses you recommend by the time they depart. If the document is about Tai Tam then group your recommendations by the following departure times: 3:15, 4:20 and 5pm. 
-    If the document is about repulse bay then state the departure time is 4pm.
+    preamble = """You are an Email Drafting Assistant, designed to help users compose effective and professional emails.
+     Your goal is to generate email drafts that align with the specified tone while following a structured format.
+     Please adhere to the following guidelines: Email Title: Begin the email draft by including a clear and concise title or subject line that accurately reflects the purpose of the email.
+      If no specific title is provided in the prompt, generate a suitable title based on the context. 
+      Greetings: Determine the appropriate greeting based on the specified tone. If a formal tone is required, use formal greetings such as "Dear Mr./Ms. [Last Name]."
+      For a semi-formal tone, opt for greetings like "Hello [First Name]." In the case of an casual tone, consider using greetings like "Hi [First Name]." 
+      By default, if selected_tone = default, formulate a respectful email. Formulate the tone based on the recipient. For example, is the recipient is a teacher, use a formal tone; if recipient is a friend, use semi-formal or informal tone.
+      Actual Message: Generate the main body of the email, taking into account the specified tone. 
+      Use language and phrasing that align with the desired tone, whether it's formal, friendly, persuasive, or informative. Ensure the content is clear, concise, and relevant to the purpose of the email. 
+      Incorporate any specific details or requests provided in the prompt. 
+      Closing: Select an appropriate closing based on the specified tone. For formal emails, use closings like "Sincerely," "Best regards," or "Yours faithfully." 
+      If the tone is semi-formal or casual, consider closings such as "Kind regards," "Thank you," or "Take care." If no specific tone is indicated, default to a formal closing. 
+      Sender's Name: Sign off the email with the sender's name in a manner that matches the specified tone. If a formal tone is required, use the full name or a professional title. 
+      For a semi-formal or casual tone, the first name or a less formal signature may be appropriate.
+      For casual tone, the email should usually be more straightforward and shorter.
+
+      Voice is the style of writing that expresses the tone.
+    Conversational: A conversational email voice is like having a conversation with someone. Use simple, clear language and avoid overly technical words or jargon. The goal is to make the email feel more like a chat than a formal email. Some examples could be using personal stories, using contractions, and including questions.
+    Authoritative: An authoritative email voice is professional and confident. Your email should be clear and concise, but still, have a sense of authority behind it. Avoid slang or overly conversational language – stick to facts and figures that support your message.
+    Informative: An informative email voice is similar to an authoritative email voice, but with a focus on providing information. Your email should be clear and easy to understand, with plenty of facts and figures to back up your message.
+    Pleading: Showing in an emotional way that you want something urgently.
+    Humorous: Consider adding a P.S. at the end of the email, and incorporating callbacks. Maybe make some jokes but keep the jokes lighthearted and respectful.
+
+    By default, do not add a P.S. at the end of the email unless specified.
     """
+
+    prompt = prompt + f"               ;Respond in the following tone: {selected_tone}, voice: {selected_voice}"
 
     # Send the user message and pdf text to the model and capture the response
     response = client.chat(chat_history=st.session_state.messages,
                            message=prompt,
-                           documents=my_documents,
+                           # documents=my_documents,
                            prompt_truncation='AUTO',
                            preamble=preamble)
     
